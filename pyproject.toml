@@ -29,9 +29,9 @@ dev = [
 
 [project.urls]
 # Homepage = "https://alldotpy.github.io/FletX"
-Repository = "https://github.com/AllDotPy/valkyrie"
+Repository = "https://github.com/AllDotPy/Valkyrie"
 # Documentation = "https://alldotpy.github.io/FletX"
-Tracker = "https://github.com/AllDotPy/valkyrie/issues"
+Tracker = "https://github.com/AllDotPy/Valkyrie/issues"
 
 [tool.setuptools]
 packages = ["valkyrie"]
