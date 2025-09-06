@@ -25,7 +25,7 @@ Thank you for your interest in contributing to Valkyrie! This guide will help yo
 ### Initial Setup
 ```bash
 # Fork the repository
-git clone https://github.com/AllDotPy/valkyrie.git
+git clone https://github.com/AllDotPy/Valkyrie.git
 cd valkyrie
 
 # Install dependencies
