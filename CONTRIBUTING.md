@@ -20,7 +20,7 @@ Thank you for your interest in contributing to Valkyrie! This guide will help yo
 ### Prerequisites
 - Python 3.10+
 - Git
-- Poetry (for dependency management)
+- uv (for dependency management)
 
 ### Initial Setup
 ```bash
@@ -29,13 +29,13 @@ git clone https://github.com/AllDotPy/valkyrie.git
 cd valkyrie
 
 # Install dependencies
-poetry install
+uv sync
 
 # Install pre-commit hooks
-poetry run pre-commit install
+uv run pre-commit install
 
 # Verify installation
-poetry run valkyrie --version
+uv run valkyrie --version
 ```
 
 ### Development Environment
@@ -80,11 +80,11 @@ valkyrie/
 ## 3. Development Workflow <a name="development-workflow"></a>
 
 ### Branch Strategy
-- `main` - Stable production branch
+- `master` - Stable production branch
 - `develop` - Integration branch for features
-- `feature/*` - New features
-- `fix/*` - Bug fixes
-- `docs/*` - Documentation improvements
+- `feature.*` - New features
+- `fix.*` - Bug fixes
+- `docs.*` - Documentation improvements
 
 ### Contribution Process
 1. **Find an Issue** - Look for `good first issue` or `help wanted` labels
@@ -170,17 +170,17 @@ from valkyrie.domain.rules import Rule
 ### Running Tests
 ```bash
 # Run all tests
-poetry run pytest
+uv run pytest
 
 # Run with coverage
-poetry run pytest --cov=valkyrie
+uv run pytest --cov=valkyrie
 
 # Run specific test
-poetry run pytest tests/domain/test_rules.py -v
+uv run pytest tests/domain/test_rules.py -v
 
 # Run linting
-poetry run ruff check .
-poetry run mypy src/
+uv run ruff check .
+uv run mypy src/
 ```
 
 ### Test Structure
@@ -216,6 +216,7 @@ Detects AWS Access Key IDs in code
 
 ## Patterns
 - `AKIA[0-9A-Z]{16}`
+```
 
 ## Examples
 
@@ -226,7 +227,7 @@ aws_key = "AKIAIOSFODNN7EXAMPLE"
 ```
 
 ### Negative
-```python
+```
 # This won't trigger (whitelisted)
 aws_key = "AKIAEXAMPLEEXAMPLE"
 ```
@@ -236,7 +237,7 @@ High
 
 ## Tags
 aws, credentials, secrets
-```
+
 
 ---
 
