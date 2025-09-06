@@ -6,7 +6,11 @@ readme = "README.md"
 license = {file = "LICENSE"}
 authors = [{ name = "AllDotPy", email = "hello@alldotpy.com" }]
 maintainers = [{ name = "#Einswilli", email = "einswilligoeh@email.com" }]
-requires-python = ">=3.13"
+requires-python = ">=3.10"
+keywords = [
+    "valkyrie", "CI/CD", "security scaner", "guardian",
+    "pipelines"
+]
 dependencies = []
 
 [project.optional-dependencies]
@@ -24,10 +28,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://alldotpy.github.io/FletX"
-Repository = "https://github.com/AllDotPy/FletX"
-Documentation = "https://alldotpy.github.io/FletX"
-Tracker = "https://github.com/AllDotPy/FletX/issues"
+# Homepage = "https://alldotpy.github.io/FletX"
+Repository = "https://github.com/AllDotPy/valkyrie"
+# Documentation = "https://alldotpy.github.io/FletX"
+Tracker = "https://github.com/AllDotPy/valkyrie/issues"
 
 [tool.setuptools]
 packages = ["valkyrie"]
