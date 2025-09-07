@@ -1,4 +1,5 @@
 """
+Valkyrie Secretis Detector Plugin.
 """
 import re
 import hashlib
