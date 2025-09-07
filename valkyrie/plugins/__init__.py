@@ -1,10 +1,11 @@
 """
 """
 from pathlib import Path
-from typing import List
+from typing import List, Set, Dict, Any
 
 from valkyrie.core.types import (
-    RuleMetadata, SecurityFinding, ScanRule
+    RuleMetadata, SecurityFinding, ScanRule,
+    ScannerPlugin
 )
 
 
@@ -28,3 +29,65 @@ class BaseSecurityRule(ScanRule):
     async def scan(self, file_path: Path, content: str) -> List[SecurityFinding]:
         """Override in subclasses"""
         return []
+
+
+
+
+####
+##      PLUGUN MANAGER CLASS
+#####
+class PluginManager:
+    """Manages scanner plugins and their lifecycle"""
+    
+    def __init__(self):
+        self.plugins: Dict[str, ScannerPlugin] = {}
+        self.enabled_plugins: Set[str] = set()
+    
+    async def register_plugin(
+        self, 
+        plugin: ScannerPlugin, 
+        config: Dict[str, Any] = None
+    ) -> None:
+        """Register and initialize a plugin"""
+        
+        await plugin.initialize(config or {})
+        self.plugins[plugin.name] = plugin
+        self.enabled_plugins.add(plugin.name)
+    
+    async def unregister_plugin(self, plugin_name: str) -> None:
+        """Unregister a plugin"""
+
+        if plugin_name in self.plugins:
+            await self.plugins[plugin_name].cleanup()
+            del self.plugins[plugin_name]
+            self.enabled_plugins.discard(plugin_name)
+    
+    def enable_plugin(self, plugin_name: str) -> None:
+        """Enable a registered plugin"""
+
+        if plugin_name in self.plugins:
+            self.enabled_plugins.add(plugin_name)
+    
+    def disable_plugin(self, plugin_name: str) -> None:
+        """Disable a plugin"""
+        self.enabled_plugins.discard(plugin_name)
+    
+    async def get_all_rules(self) -> List[ScanRule]:
+        """Get rules from all enabled plugins"""
+        
+        all_rules = []
+        
+        for plugin_name in self.enabled_plugins:
+            if plugin_name in self.plugins:
+                plugin_rules = await self.plugins[plugin_name].get_rules()
+                all_rules.extend(plugin_rules)
+        
+        return all_rules
+    
+    async def cleanup_all(self) -> None:
+        """Cleanup all plugins"""
+        for plugin in self.plugins.values():
+            await plugin.cleanup()
+        
+        self.plugins.clear()
+        self.enabled_plugins.clear()
