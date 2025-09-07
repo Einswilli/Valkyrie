@@ -31,8 +31,6 @@ class BaseSecurityRule(ScanRule):
         return []
 
 
-
-
 ####
 ##      PLUGUN MANAGER CLASS
 #####
