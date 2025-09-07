@@ -26,8 +26,13 @@ class BaseSecurityRule(ScanRule):
         """Default implementation - override in subclasses"""
         return True
     
-    async def scan(self, file_path: Path, content: str) -> List[SecurityFinding]:
+    async def scan(
+        self, 
+        file_path: Path, 
+        content: str
+    ) -> List[SecurityFinding]:
         """Override in subclasses"""
+        
         return []
 
 
