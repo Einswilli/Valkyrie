@@ -11,7 +11,7 @@ from datetime import datetime
 
 from valkyrie.core.types import (
     RuleRepository, ScannerPlugin, ScanRule,
-    ScanConfig, SecurityFinding, ScanResult,
+    SecurityFinding, ScanResult,
     ScanStatus
 )
 
