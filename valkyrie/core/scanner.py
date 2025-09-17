@@ -8,12 +8,13 @@ import asyncio
 import logging
 from datetime import datetime
 
-
-from valkyrie.core.types import (
-    RuleRepository, ScannerPlugin, ScanRule,
+# from ..plugins.base import ScannerPlugin
+from .types import (
+    RuleRepository, ScanRule,
     SecurityFinding, ScanResult,
     ScanStatus
 )
+from .conf import ScanConfig
 
 
 ####
@@ -27,14 +28,16 @@ class ValkyrieScanner:
     def __init__(
         self,
         rule_repository: RuleRepository,
+        config: ScanConfig,
         logger: Optional[logging.Logger] = None
     ):
+        self.config = config
         self.rule_repository = rule_repository
         self.logger = logger or logging.getLogger(__name__)
-        self.plugins: Dict[str, ScannerPlugin] = {}
+        # self.plugins: Dict[str, ScannerPlugin] = {}
         self._rules_cache: Optional[List[ScanRule]] = None
     
-    async def register_plugin(self, plugin: ScannerPlugin) -> None:
+    async def register_plugin(self, plugin) -> None:
         """Register a scanner plugin"""
 
         # Initialize the plugin
@@ -66,9 +69,9 @@ class ValkyrieScanner:
         rules = await self.rule_repository.load_rules()
         
         # Load from plugins
-        for plugin in self.plugins.values():
-            plugin_rules = await plugin.get_rules()
-            rules.extend(plugin_rules)
+        # for plugin in self.plugins.values():
+        #     plugin_rules = await plugin.get_rules()
+        #     rules.extend(plugin_rules)
         
         self._rules_cache = rules
         return rules
@@ -138,7 +141,7 @@ class ValkyrieScanner:
         
         return findings
     
-    async def scan(self, config: ScanConfig) -> ScanResult:
+    async def scan(self, config: Optional[ScanConfig] = None) -> ScanResult:
         """
         Execute security scan based on configuration
         
@@ -149,6 +152,8 @@ class ValkyrieScanner:
             Complete scan results
         """
         
+        # Detect config
+        config = config or self.config
         scan_id = f"scan_{datetime.now().isoformat()}"
         start_time = datetime.now()
         
@@ -206,6 +211,8 @@ class ValkyrieScanner:
             
         except Exception as e:
             self.logger.error(f"Scan failed: {e}")
+            import traceback
+            traceback.print_exc()
             return ScanResult(
                 scan_id=scan_id,
                 status=ScanStatus.FAILED,

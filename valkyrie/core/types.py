@@ -193,8 +193,8 @@ class ScanRule(Protocol):
 ####
 ##     SCANNER PLUGINS BASE CLASS
 #####
-class ScannerPlugin(ABC):
-    """Abstract base class for scanner plugins"""
+class Plugin(ABC):
+    """Abstract base class for all plugins"""
     
     @property
     @abstractmethod
@@ -211,11 +211,6 @@ class ScannerPlugin(ABC):
     @abstractmethod
     async def initialize(self, config: Dict[str, Any]) -> None:
         """Initialize the plugin with configuration"""
-        pass
-    
-    @abstractmethod
-    async def get_rules(self) -> List[ScanRule]:
-        """Return list of rules provided by this plugin"""
         pass
     
     @abstractmethod

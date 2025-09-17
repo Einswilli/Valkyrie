@@ -1,46 +1,23 @@
 """
-Valkyrie - Plugin module.
+Valkyrie - Plugin Manager.
 """
-from pathlib import Path
-from typing import List, Set, Dict, Any, Optional
+from typing import (
+    List, Set, Dict, Any, Optional,
+)
 import logging
 
+from valkyrie.utils import (
+    get_logger,
+    get_context
+)
 from valkyrie.core.types import (
-    RuleMetadata, SecurityFinding, ScanRule,
-    ScannerPlugin
+    ScanRule,
 )
 
-
-####
-##      BASE CLASS FOR SECURITY RULE IMPLEMENTATION
-#####
-class BaseSecurityRule(ScanRule):
-    """Base implementation for security rules"""
-    
-    def __init__(
-        self, 
-        metadata: RuleMetadata,
-        logger: Optional[logging.Logger] = None
-    ):
-        self._metadata = metadata
-        self.logger = logger or logging.getLogger(__name__)
-    
-    @property
-    def metadata(self) -> RuleMetadata:
-        return self._metadata
-    
-    def is_applicable(self, file_path: Path) -> bool:
-        """Default implementation - override in subclasses"""
-        return True
-    
-    async def scan(
-        self, 
-        file_path: Path, 
-        content: str
-    ) -> List[SecurityFinding]:
-        """Override in subclasses"""
-        
-        return []
+from .base import (
+    ScannerPlugin, import_plugin,
+    PluginsRegistry
+)
 
 
 ####
@@ -55,7 +32,39 @@ class PluginManager:
     ):
         self.plugins: Dict[str, ScannerPlugin] = {}
         self.enabled_plugins: Set[str] = set()
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or get_logger('Valkyrie.PluginManager')
+
+
+    @classmethod
+    async def load_from_config(cls, config: Dict[str,Any]):
+        """Detect and load plugins from config"""
+
+        ctx = get_context()
+        cmd_args = ctx.get_data('cmd_arrgs')
+
+        plugins = config
+        for plugin_name in plugins.keys():
+
+            try:
+                import_plugin(plugin_name)
+                # Log if verbose
+                if cmd_args.verbose:
+                    cls.logger.info(
+                        f'{plugin_name} plugin loaded...'
+                    )
+                    
+            # Error importing plugin
+            except Exception as e:
+                if cmd_args.verbose:
+                    cls.logger.warning(
+                        f'Error loading {plugin_name} {e}'
+                    )
+
+        # Use Regiistry to initialize plugins
+        for plugin in PluginsRegistry.all():
+            await cls.register_plugin(
+                plugin.with_config(config.get(plugin.name))
+            )
     
     async def register_plugin(
         self, 

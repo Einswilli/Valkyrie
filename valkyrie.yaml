@@ -1,0 +1,152 @@
+# Core scanner settings
+scanner:
+  # Target directory to scan (relative to config file)
+  target_path: "."
+  
+  # File inclusion patterns (glob patterns)
+  include_patterns:
+    - "**/*.py"
+    - "**/*.js"
+    - "**/*.ts"
+    - "**/*.java"
+    - "**/*.go"
+    - "**/*.rs"
+    - "**/*.yaml"
+    - "**/*.yml"
+    - "**/*.json"
+    - "**/*.tf"
+    - "**/*.hcl"
+  
+  # File exclusion patterns
+  exclude_patterns:
+    - "**/.git/**"
+    - "**/.vscode/**"
+    - "**/node_modules/**"
+    - "**/__pycache__/**"
+    - "**/target/**"
+    - "**/build/**"
+    - "**/dist/**"
+    - "**/*.min.js"
+    - "**/*.map"
+    - ".venv/**"
+  
+  # Maximum file size to scan (in bytes)
+  max_file_size: 10485760  # 10MB
+  
+  # Number of parallel scanning workers
+  parallel_workers: 4
+  
+  # Minimum severity level to report
+  severity_threshold: "low"  # critical, high, medium, low, info
+  
+  # Whether to fail the build on security findings
+  fail_on_findings: true
+  
+  # Scan only changed files in CI (if supported)
+  diff_only: false
+
+# Rule configuration
+rules:
+  # Remote rule repository (GitHub, GitLab, etc.)
+  repository:
+    type: "github"
+    url: "AllDotPy/valkyrie-community-rules"
+    branch: "master"
+    token_env: "GITHUB_TOKEN"  # Environment variable for authentication
+  
+  # Local rules directory
+  local_rules_dir: "./rules"
+  
+  # Rule filters (empty = all rules enabled)
+  include_rules: []
+  
+  # Disabled rules
+  exclude_rules: []
+  
+  # Custom rule categories to enable/disable
+  categories:
+    secrets: true
+    dependencies: true
+    iam_config: true
+    code_quality: false
+    infrastructure: true
+
+# Plugin configuration
+plugins:
+  # Built-in plugins
+  secrets_detector:
+    enabled: true
+    config:
+      # Custom entropy threshold for secrets detection
+      entropy_threshold: 3.5
+      # Additional secret patterns (regex)
+      custom_patterns:
+        - name: "Custom API Key"
+          pattern: "CUSTOM_[A-Z0-9]{32}"
+          keywords: ["custom", "api"]
+  
+  dependency_scanner:
+    enabled: true
+    config:
+      # Vulnerability database sources
+      databases:
+        - "osv.dev"
+        - "nvd.nist.gov"
+      # Cache duration for vulnerability data (hours)
+      cache_duration: 24
+      # Check dev dependencies
+      include_dev_deps: true
+  
+  iam_scanner:
+    enabled: true
+    config:
+      # Cloud providers to check
+      providers: ["aws", "gcp", "azure"]
+      # Custom IAM policy patterns
+      custom_patterns:
+        - name: "Wildcard Principal"
+          pattern: '"Principal":\s*"\*"'
+          severity: "critical"
+
+# Output configuration
+output:
+  # Default output format
+  format: "json"  # json, sarif, html
+  
+  # Output file (optional)
+  file: "output.json"
+  
+  # Verbose logging
+  verbose: false
+  
+  # Include successful scans in output
+  include_success: false
+
+# CI/CD Integration settings
+ci_integration:
+  # GitHub Actions
+  - github:
+    # Post results as check runs
+    create_check_runs: true
+    # Comment on Pull Requests
+    comment_on_pr: true
+    # Create annotations for findings
+    create_annotations: true
+    # Maximum annotations to create
+    max_annotations: 50
+  
+  # GitLab CI
+  - gitlab:
+    # Post merge request notes
+    post_mr_notes: true
+    # Create commit statuses
+    create_commit_status: true
+    # Generate SAST reports
+    generate_sast_report: true
+  
+  # Generic CI settings
+  - generic:
+    # Exit codes
+    success_exit_code: 0
+    findings_exit_code: 1
+    failure_exit_code: 2

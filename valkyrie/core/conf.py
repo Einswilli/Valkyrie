@@ -11,10 +11,11 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from valkyrie.core.types import SeverityLevel
+from .types import SeverityLevel
 
 #### GENERIC TYPES
 T = TypeVar('T', bound='BaseConfigModel')
+
 
 ####
 ##     LOG LEVELs
@@ -136,7 +137,7 @@ class RuleRepositoryConfig(BaseConfigModel):
 
     type: str = 'github'
     url: str = 'AllDotPt/valkyrie-community-rules'
-    branch: str = 'main'
+    branch: str = 'master'
     token_env: str = 'GITHUB_TOKEN'
 
 
@@ -229,10 +230,12 @@ class ValkyrieConfig(BaseConfigModel):
     scanner: ScanConfig
     """Scanner engine configuration."""
 
-    rules: Optional[RulesConfig] 
+    rules: Optional[RulesConfig] = Field(
+        default_factory = lambda: RulesConfig()
+    )
     """Rule repositories"""
 
-    plugins: List[PluginConfig]
+    plugins: Dict[str,Any]
     """Scanner Plugins to use."""
 
     output: OutputConfig = Field(
@@ -240,5 +243,7 @@ class ValkyrieConfig(BaseConfigModel):
     )
     """Scan Result Outout format"""
 
-    ci_integration: List
+    ci_integration: List = Field(
+        default_factory= lambda: []
+    )
     """A list of ci integration (github action, gitlab ci, etc)"""

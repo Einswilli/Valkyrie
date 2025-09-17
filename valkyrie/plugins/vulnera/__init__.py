@@ -2,10 +2,14 @@ import hashlib
 from pathlib import Path
 from typing import Dict, List, Any
 
-from valkyrie.plugins import BaseSecurityRule
-from valkyrie.core.types import (
-    ScanRule, ScannerPlugin, RuleMetadata, SecurityFinding, 
+from valkyrie.core import (
+    BaseSecurityRule, ScanRule,
+    RuleMetadata, SecurityFinding, 
     FileLocation, SeverityLevel, FindingCategory,
+)
+
+from valkyrie.plugins.base import (
+    ScannerPlugin, register_plugin
 )
 
 from .conf import VulnerabilityInfo
@@ -115,6 +119,7 @@ class DependencyVulnerabilityRule(BaseSecurityRule):
 ####
 ##      VULNERABILITY PLUGIN
 #####
+@register_plugin()
 class DependenciesPlugin(ScannerPlugin):
     """Plugin for dependency vulnerability scanning"""
     

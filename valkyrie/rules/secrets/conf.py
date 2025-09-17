@@ -1,22 +1,34 @@
 import re
-from dataclasses import dataclass, field
+from pydantic import Field
 from typing import (
-    Set, Pattern
+    Set, Pattern, List
 )
+
+from valkyrie.core import BaseConfigModel
+from valkyrie.rules.base import BaseRuleConfig
+
+
+####
+##      SECURITY RULE CONFIG
+#####
+class SecretsRuleConfig(BaseRuleConfig):
+    """Secrets Rule Confiiguration model."""
+
+    patterns: List['SecretPattern']
 
 
 ####
 ##      SECRET PATTERN MODEL
 #####
-@dataclass
-class SecretPattern:
+
+class SecretPattern(BaseConfigModel):
     """Pattern definition for secret detection"""
 
     name: str
     pattern: Pattern[str]
     entropy_threshold: float = 0.0
-    keywords: Set[str] = field(default_factory=set)
-    file_extensions: Set[str] = field(default_factory=set)
+    keywords: Set[str] = Field(default_factory=set)
+    file_extensions: Set[str] = Field(default_factory=set)
 
 
 ####    

@@ -9,9 +9,17 @@ from pathlib import Path
 
 import yaml
 
-from valkyrie.core.conf import ValkyrieConfig
-from valkyrie.core.scanner import ValkyrieScanner
-from valkyrie.utils.context import ValkyrieContext
+from valkyrie.core import (
+    ValkyrieConfig, ValkyrieScanner,
+    ScanStatus, get_formatter
+)
+from valkyrie.rules.repositories import (
+    LocalRuleRepository, GitHubRuleRepository
+)
+from valkyrie.utils import (
+    get_context,
+    get_logger
+)
 
 
 ####
@@ -21,6 +29,9 @@ class ValkyrieCLI:
     """Command line interface for Valkyrie scanner"""
     
     def __init__(self):
+
+        self.logger = get_logger('Valkyrie.CLI')
+        self.context = get_context()
         # self.ci_integrations = [
         #     GitHubActionsIntegration(),
         #     GitLabCIIntegration()
@@ -90,66 +101,78 @@ Examples:
         # Load Config file
         file = Path(args.config_file)
 
+        print(file)
+
         # Create configuration
         config = ValkyrieConfig.from_json(
             yaml.safe_load(file.read_text())
         )
+
+        # Add cmd args to the global context
+        self.context.set_data('cmd_args', args)
+
+        # Detect and register configured plugins
+        # PluginManager.load_from_config(config.plugins)
+
         
         # Detect CI environment
-        active_ci = None
-        for ci_integration in self.ci_integrations:
-            if ci_integration.detect_environment():
-                active_ci = ci_integration
-                break
+        # active_ci = None
+        # for ci_integration in self.ci_integrations:
+        #     if ci_integration.detect_environment():
+        #         active_ci = ci_integration
+        #         break
         
-        if active_ci and args.verbose:
-            print(f"Detected CI environment: {active_ci.__class__.__name__}")
+        # if active_ci and args.verbose:
+        #     print(f"Detected CI environment: {active_ci.__class__.__name__}")
         
-        # Filter files if diff-only mode
-        if args.diff_only and active_ci:
-            changed_files = active_ci.get_changed_files()
-            if changed_files:
-                # Convert to include patterns
-                config.scanner.include_patterns = [str(f) for f in changed_files]
-                if args.verbose:
-                    print(f"Scanning {len(changed_files)} changed files")
+        # # Filter files if diff-only mode
+        # if args.diff_only and active_ci:
+        #     changed_files = active_ci.get_changed_files()
+        #     if changed_files:
+        #         # Convert to include patterns
+        #         config.scanner.include_patterns = [str(f) for f in changed_files]
+        #         if args.verbose:
+        #             print(f"Scanning {len(changed_files)} changed files")
         
         # Set up scanner
-        from valkyrie.plugins import LocalRuleRepository
-        rule_repo = LocalRuleRepository(Path("rules"))  # In practice, use GitHub repo
-        scanner = ValkyrieScanner(rule_repo)
         
-        # Register plugins
-        plugin_manager = PluginManager()
-        await plugin_manager.register_plugin(SecretsPlugin())
-        await plugin_manager.register_plugin(DependenciesPlugin())
-        await plugin_manager.register_plugin(IAMPlugin())
+
+        # Init GH repository with config options
+        gh_repo = GitHubRuleRepository(
+            config = config.rules.repository
+        )
+        # local_repo = LocalRuleRepository(Path("rules"))  # In practice, use GitHub repo
+        scanner = ValkyrieScanner(
+            rule_repository = gh_repo,
+            config = config.scanner
+        )
         
         # Run scan
         if args.verbose:
-            print(f"Starting security scan of {config.target_path}")
+            print(f"Starting security scan of {config.scanner.target_path}")
         
-        result = await scanner.scan(config)
+        result = await scanner.scan()
         
         # Format results
-        formatter = self.formatters[args.format]
-        formatted_output = formatter.format(result)
+        formatter = get_formatter(config.output.format)
+        formatted_output = formatter().format(result)
         
         # Output results
-        if args.output:
-            args.output.write_text(formatted_output, encoding='utf-8')
+        if config.output.file:
+            Path(config.output.file).write_text(formatted_output, encoding='utf-8')
             print(f"Results saved to: {args.output}")
         else:
             print(formatted_output)
         
         # Post to CI if in CI environment
-        if active_ci:
-            await active_ci.post_results(result, {})
+        # if active_ci:
+        #     await active_ci.post_results(result, {})
         
         # Determine exit code
         if result.status == ScanStatus.FAILED:
             return 2  # Scan failure
-        elif config.fail_on_findings and result.has_blocking_issues:
+        elif config.scanner.fail_on_findings and result.has_blocking_issues:
             return 1  # Security issues found
         else:
             return 0  # Success
+        

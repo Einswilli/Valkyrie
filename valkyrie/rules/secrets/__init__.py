@@ -3,42 +3,74 @@ Valkyrie Secretis Detector Plugin.
 """
 import hashlib
 from typing import (
-    List, Dict, Any
+    List, Union, Dict, Any
 )
 from pathlib import Path
 
-from valkyrie.plugins import BaseSecurityRule
-from valkyrie.core.types import (
-    RuleMetadata, FindingCategory, SeverityLevel,
-    SecurityFinding, ScanRule, ScannerPlugin,
+from valkyrie.core import (
+    SecurityFinding, 
     FileLocation
+)
+from valkyrie.utils import load_yaml
+from valkyrie.rules.base import (
+    BaseSecurityRule, register_rule,
 )
 
 from .conf import (
-    SECRETS_PATTERNS, SecretPattern
+    SecretPattern,
+    SecretsRuleConfig
 )
 
 
 ####
 ##      SECRET DETECTION RULE
 #####
+@register_rule()
 class SecretsDetectionRule(BaseSecurityRule):
     """Rule for detecting secrets and credentials"""
+
+    description = "Detects API keys, tokens, passwords, and other secrets"
     
-    def __init__(self):
-        metadata = RuleMetadata(
-            id = "secrets-001",
-            name = "Generic Secrets Detection",
-            description = "Detects API keys, tokens, passwords, and other secrets",
-            category = FindingCategory.SECRETS,
-            severity = SeverityLevel.CRITICAL,
-            author = "Valkyrie Core Team",
-            tags = {"secrets", "credentials", "api-keys"}
-        )
-        super().__init__(metadata)
-        
+    def __init__(
+        self,
+        config: SecretsRuleConfig
+    ):
+        # Initialize c
+        super().__init__(config)
+
         # Define secret patterns
-        self.patterns = SECRETS_PATTERNS
+        self.patterns = config.patterns
+    
+    @classmethod
+    def from_config(
+        cls, 
+        config: SecretsRuleConfig
+    ) -> 'SecretsDetectionRule':
+        """Load and return a SecretsDetection Rule instance from config"""
+
+        return cls(config)
+    
+    @classmethod
+    def from_yaml(
+        cls, 
+        file: Union[str, Path]
+    )-> 'SecretsDetectionRule':
+        """Load Rule fom .Yaml file"""
+        
+        return cls.from_config(
+            SecretsRuleConfig.from_json(load_yaml(file))
+        )
+    
+    @classmethod
+    def from_json(
+        cls, 
+        json_content: Dict[str, Any]
+    )-> 'SecretsDetectionRule':
+        """Load Rule fom json content (python dict)"""
+        
+        return cls.from_config(
+            SecretsRuleConfig.from_json(json_content)
+        )
     
     def _calculate_entropy(self, text: str) -> float:
         """Calculate Shannon entropy of text"""
@@ -62,6 +94,7 @@ class SecretsDetectionRule(BaseSecurityRule):
     
     def is_applicable(self, file_path: Path) -> bool:
         """Check if file should be scanned for secrets"""
+        
         # Skip binary files and common non-text files
         skip_extensions = {
             '.jpg', '.jpeg', '.png', '.gif', 
@@ -73,7 +106,11 @@ class SecretsDetectionRule(BaseSecurityRule):
         
         return True
     
-    async def scan(self, file_path: Path, content: str) -> List[SecurityFinding]:
+    async def scan(
+        self, 
+        file_path: Path, 
+        content: str
+    ) -> List[SecurityFinding]:
         """Scan for secrets in file content"""
 
         findings = []
@@ -112,7 +149,7 @@ class SecretsDetectionRule(BaseSecurityRule):
                         description = f"Found pattern matching {pattern.name} in {file_path}",
                         severity = self.metadata.severity,
                         category = self.metadata.category,
-                        location =FileLocation(
+                        location = FileLocation(
                             file_path = file_path,
                             line_number = line_num,
                             column_start = match.start(),
@@ -126,8 +163,11 @@ class SecretsDetectionRule(BaseSecurityRule):
                             "line_content": line.strip()
                         },
                         remediation_advice = (
-                            f"Remove or secure the {pattern.name}. "
-                            "Consider using environment variables or secure vault services."
+                            self.config.remediation or 
+                            (
+                                f"Remove or secure the {pattern.name}. "
+                                "Consider using environment variables or secure vault services."
+                            )
                         )
                     )
                     findings.append(finding)
@@ -158,25 +198,26 @@ class SecretsDetectionRule(BaseSecurityRule):
 ####
 ##      SECRETS PLUGIN
 #####
-class SecretsPlugin(ScannerPlugin):
-    """Plugin for secrets detection"""
+# @register_plugin()
+# class SecretsPlugin(ScannerPlugin):
+#     """Plugin for secrets detection"""
     
-    @property
-    def name(self) -> str:
-        return "secrets-detector"
+#     @property
+#     def name(self) -> str:
+#         return "secrets"
     
-    @property
-    def version(self) -> str:
-        return "1.0.0"
+#     @property
+#     def version(self) -> str:
+#         return "1.0.0"
     
-    async def initialize(self, config: Dict[str, Any]) -> None:
-        """Initialize secrets plugin"""
-        pass
+#     async def initialize(self, config: Dict[str, Any]) -> None:
+#         """Initialize secrets plugin"""
+#         pass
     
-    async def get_rules(self) -> List[ScanRule]:
-        """Return secrets detection rules"""
-        return [SecretsDetectionRule()]
+#     async def get_rules(self) -> List[ScanRule]:
+#         """Return secrets detection rules"""
+#         return [SecretsDetectionRule()]
     
-    async def cleanup(self) -> None:
-        """Cleanup plugin resources"""
-        pass
+#     async def cleanup(self) -> None:
+#         """Cleanup plugin resources"""
+#         pass

@@ -20,7 +20,7 @@ class ValkyrieContext:
     within a Scan Process lifecycle.
     """
     
-    _config: Optional[] = None
+    # _config: Optional[] = None
     _data: Dict[str, Any] = {}
     _debug: bool = False
     _is_initialized: bool = False
