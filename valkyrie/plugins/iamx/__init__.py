@@ -2,6 +2,7 @@ import hashlib
 from pathlib import Path
 from typing import Dict, List, Any
 
+<<<<<<< HEAD
 from valkyrie.core import (
     BaseSecurityRule, ScanRule, 
     RuleMetadata, SecurityFinding, 
@@ -11,6 +12,13 @@ from valkyrie.plugins.base import (
     ScannerPlugin, register_plugin
 )
 
+=======
+from valkyrie.plugins import BaseSecurityRule
+from valkyrie.core.types import (
+    ScanRule, ScannerPlugin, RuleMetadata, SecurityFinding, 
+    FileLocation, SeverityLevel, FindingCategory,
+)
+>>>>>>> 46c4453be87e5209b03d8e2d67126063fb2c3b99
 
 from .conf import RISKY_PATTERNS
 
@@ -119,7 +127,10 @@ class IAMConfigurationRule(BaseSecurityRule):
 ####
 ##      IAM CONFIGURATION PLUGIN
 #####
+<<<<<<< HEAD
 @register_plugin()
+=======
+>>>>>>> 46c4453be87e5209b03d8e2d67126063fb2c3b99
 class IAMPlugin(ScannerPlugin):
     """Plugin for IAM configuration scanning"""
     

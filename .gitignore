@@ -212,3 +212,4 @@ docs/*
 rules/*
 tests/*
 valkyrie/repositories/*
+output.json
